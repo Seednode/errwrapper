@@ -21,6 +21,14 @@ func RunCommand(arguments []string) {
 	signal.Notify(sig, syscall.SIGINT, os.Interrupt)
 
 	pidFile := CreatePIDFile()
+	defer func() {
+		err := pidFile.Close()
+		if err != nil {
+			panic(err)
+		}
+
+		RemovePIDFile()
+	}()
 
 	homeDirectory, err := os.UserHomeDir()
 	if err != nil {

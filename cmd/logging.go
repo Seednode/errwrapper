@@ -65,11 +65,6 @@ func LogCommand(pidFile *os.File, arguments []string) (string, string, int) {
 		panic(err)
 	}
 
-	err = pidFile.Close()
-	if err != nil {
-		panic(err)
-	}
-
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -89,8 +84,6 @@ func LogCommand(pidFile *os.File, arguments []string) (string, string, int) {
 	if err != nil {
 		panic(err)
 	}
-
-	RemovePIDFile()
 
 	return stdOutFile, stdErrFile, exitCode
 }
