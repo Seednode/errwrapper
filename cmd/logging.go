@@ -38,11 +38,11 @@ func CreateLoggingDirectory() string {
 func LogCommand(pidFile *os.File, arguments []string) (string, string, int) {
 	timeStamp := fmt.Sprint(time.Now().UnixMicro())
 	loggingDirectory := CreateLoggingDirectory()
-	loggingPrefix := loggingDirectory + "/" + timeStamp + "_" + filepath.Base(os.Args[1])
+	loggingPrefix := loggingDirectory + "/" + timeStamp + "_" + filepath.Base(arguments[0])
 	stdOutFile := loggingPrefix + "_out.log"
 	stdErrFile := loggingPrefix + "_err.log"
 
-	cmd := exec.Command(arguments[1], arguments[2:]...)
+	cmd := exec.Command(arguments[0], arguments[1:]...)
 
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
