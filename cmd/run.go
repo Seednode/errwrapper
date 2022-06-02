@@ -17,6 +17,8 @@ import (
 )
 
 func RunCommand(arguments []string) {
+	defer HandleExit()
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, os.Interrupt)
 
@@ -24,7 +26,8 @@ func RunCommand(arguments []string) {
 	defer func() {
 		err := pidFile.Close()
 		if err != nil {
-			panic(err)
+			fmt.Println("Failed to close pid file.")
+			panic(Exit{1})
 		}
 
 		RemovePIDFile()
@@ -32,33 +35,55 @@ func RunCommand(arguments []string) {
 
 	homeDirectory, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		fmt.Println("Home directory not found.")
+		panic(Exit{1})
 	}
 
 	envFile := homeDirectory + "/.config/errwrapper/.env"
 	err = godotenv.Load(envFile)
 	if err != nil {
-		panic(err)
+		fmt.Println("Failed to load env file.")
+		panic(Exit{1})
 	}
-
-	startTime := time.Now()
-	stdOutFile, stdErrFile, exitCode := LogCommand(pidFile, arguments)
-	stopTime := time.Now()
 
 	hostName, err := os.Hostname()
 	if err != nil {
-		panic(err)
+		fmt.Println("Hostname not found.")
+		panic(Exit{1})
 	}
+
+	startTime := time.Now()
+	stdOutFile, stdErrFile, exitCode, err := LogCommand(pidFile, arguments)
+	if err != nil {
+		fmt.Println(err)
+	}
+	stopTime := time.Now()
 
 	command := strings.Join(arguments, " ")
 
 	var wg sync.WaitGroup
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
-		databaseURL := GetDatabaseURL()
-		sqlStatement := CreateSQLStatement(startTime, stopTime, hostName, command, exitCode)
-		WriteToDatabase(databaseURL, sqlStatement)
+
+		databaseURL, err := GetDatabaseURL()
+		if err != nil {
+			fmt.Println(err)
+			panic(Exit{1})
+		}
+
+		sqlStatement, err := CreateSQLStatement(startTime, stopTime, hostName, command, exitCode)
+		if err != nil {
+			fmt.Println(err)
+			panic(Exit{1})
+		}
+
+		err = WriteToDatabase(databaseURL, sqlStatement)
+		if err != nil {
+			fmt.Println(err)
+			panic(Exit{1})
+		}
 	}()
 
 	if exitCode > 0 {
@@ -72,7 +97,11 @@ func RunCommand(arguments []string) {
 				"Start time: ", startTime.Format(MAILDATE),
 				"Stop time: ", stopTime.Format(MAILDATE),
 			)
-			SendLogEmail(subject, body, stdOutFile, stdErrFile)
+			err := SendLogEmail(subject, body, stdOutFile, stdErrFile)
+			if err != nil {
+				fmt.Println(err)
+				panic(Exit{1})
+			}
 		}()
 	}
 

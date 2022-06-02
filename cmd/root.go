@@ -5,7 +5,7 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -25,10 +25,12 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		fmt.Println(err)
+		panic(Exit{1})
 	}
 }
 
 func init() {
 	rootCmd.Flags().BoolVarP(&Quiet, "quiet", "q", false, "only write output to file")
+	rootCmd.Flags().SetInterspersed(false)
 }

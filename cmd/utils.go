@@ -5,23 +5,33 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"sync"
 )
 
-func GetEnvVar(variable string) string {
-	v := os.Getenv(variable)
-	if v == "" {
-		fmt.Println("Variable " + variable + " is empty. Exiting.")
-		os.Exit(1)
-	}
+type Exit struct{ Code int }
 
-	return v
+func HandleExit() {
+	if e := recover(); e != nil {
+		if exit, ok := e.(Exit); ok == true {
+			os.Exit(exit.Code)
+		}
+		panic(e)
+	}
 }
 
-func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) {
+func GetEnvVar(variable string) (string, error) {
+	v := os.Getenv(variable)
+	if v == "" {
+		return "", errors.New("Variable " + variable + " is empty. Exiting.")
+	}
+
+	return v, nil
+}
+
+func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) error {
 	defer wg.Done()
 
 	var fileDescriptors []io.Writer
@@ -29,13 +39,15 @@ func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) {
 	for _, element := range out {
 		fileDescriptor, err := os.OpenFile(element, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
-			panic(err)
+			return errors.New("Failed to open file.")
 		}
-		defer func() {
+		defer func() error {
 			err := fileDescriptor.Close()
 			if err != nil {
-				panic(err)
+				return errors.New("Failed to close file.")
 			}
+
+			return nil
 		}() // close each fd after we finish reading
 		fileDescriptors = append(fileDescriptors, fileDescriptor)
 	}
@@ -50,6 +62,8 @@ func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) {
 
 	_, err := io.CopyBuffer(writer, in, buf)
 	if err != nil {
-		panic(err)
+		return errors.New("Failed to write logs.")
 	}
+
+	return nil
 }
