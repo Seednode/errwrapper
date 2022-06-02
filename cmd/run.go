@@ -22,15 +22,22 @@ func RunCommand(arguments []string) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, os.Interrupt)
 
-	pidFile := CreatePIDFile()
+	pidFile, err := CreatePIDFile()
+	if err != nil {
+		fmt.Println(err)
+		panic(Exit{1})
+	}
+
 	defer func() {
 		err := pidFile.Close()
 		if err != nil {
 			fmt.Println("Failed to close pid file.")
-			panic(Exit{1})
 		}
 
-		RemovePIDFile()
+		err = RemovePIDFile()
+		if err != nil {
+			fmt.Println(err)
+		}
 	}()
 
 	homeDirectory, err := os.UserHomeDir()
@@ -42,7 +49,7 @@ func RunCommand(arguments []string) {
 	envFile := homeDirectory + "/.config/errwrapper/.env"
 	err = godotenv.Load(envFile)
 	if err != nil {
-		fmt.Println("Failed to load env file.")
+		fmt.Printf("Failed to load env file %q.", envFile)
 		panic(Exit{1})
 	}
 
@@ -70,19 +77,19 @@ func RunCommand(arguments []string) {
 		databaseURL, err := GetDatabaseURL()
 		if err != nil {
 			fmt.Println(err)
-			panic(Exit{1})
+			return
 		}
 
 		sqlStatement, err := CreateSQLStatement(startTime, stopTime, hostName, command, exitCode)
 		if err != nil {
 			fmt.Println(err)
-			panic(Exit{1})
+			return
 		}
 
 		err = WriteToDatabase(databaseURL, sqlStatement)
 		if err != nil {
 			fmt.Println(err)
-			panic(Exit{1})
+			return
 		}
 	}()
 
@@ -100,7 +107,6 @@ func RunCommand(arguments []string) {
 			err := SendLogEmail(subject, body, stdOutFile, stdErrFile)
 			if err != nil {
 				fmt.Println(err)
-				panic(Exit{1})
 			}
 		}()
 	}

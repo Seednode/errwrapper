@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/cockroachdb/cockroach-go/v2/crdb/crdbpgx"
@@ -135,26 +134,4 @@ func InsertRows(ctx context.Context, tx pgx.Tx, statement string) error {
 	}
 
 	return nil
-}
-
-func LogToDatabase(startTime, stopTime time.Time, hostName, command string, exitCode int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	databaseURL, err := GetDatabaseURL()
-	if err != nil {
-		fmt.Println(err)
-		panic(Exit{1})
-	}
-
-	sqlStatement, err := CreateSQLStatement(startTime, stopTime, hostName, command, exitCode)
-	if err != nil {
-		fmt.Println(err)
-		panic(Exit{1})
-	}
-
-	err = WriteToDatabase(databaseURL, sqlStatement)
-	if err != nil {
-		fmt.Println(err)
-		panic(Exit{1})
-	}
 }

@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -59,7 +60,7 @@ func SendLogEmail(subject string, body string, attachments ...string) error {
 	for _, attachment := range attachments {
 		filestat, err := os.Stat(attachment)
 		if err != nil {
-			return errors.New("File to be attached does not exist.")
+			return fmt.Errorf("File %q to be attached does not exist.", attachment)
 		}
 		if filestat.Size() > 0 {
 			m.Attach(attachment)

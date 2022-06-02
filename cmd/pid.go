@@ -13,32 +13,38 @@ import (
 
 func CheckPIDFile() (string, bool) {
 	homeDirectory, _ := os.UserHomeDir()
+
 	pidFile := homeDirectory + "/pids/" + filepath.Base(os.Args[1]) + ".pid"
 	if _, err := os.Stat(pidFile); !errors.Is(err, os.ErrNotExist) {
 		return pidFile, true
 	}
+
 	return pidFile, false
 }
 
-func CreatePIDFile() *os.File {
+func CreatePIDFile() (*os.File, error) {
 	pidFile, exists := CheckPIDFile()
 	if exists {
 		fmt.Println("Pidfile exists. Not running.")
-		os.Exit(1)
+		panic(Exit{1})
 	}
+
 	filePtr, err := os.Create(pidFile)
 	if err != nil {
-		panic(err)
+		return nil, errors.New("Failed to create pid file.")
 	}
-	return filePtr
+
+	return filePtr, nil
 }
 
-func RemovePIDFile() {
+func RemovePIDFile() error {
 	pidfile, exists := CheckPIDFile()
 	if exists {
 		err := os.Remove(pidfile)
 		if err != nil {
-			panic(err)
+			return errors.New("Failed to remove pid file.")
 		}
 	}
+
+	return nil
 }
