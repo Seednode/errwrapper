@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-go/v2/crdb/crdbpgx"
-	pgx "github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4"
 )
 
 const DBDATE string = "2006-01-02T15:04:05.000000000-07:00"
@@ -111,10 +111,15 @@ func CreateSQLStatement(startTime, stopTime time.Time, hostName, command string,
 func WriteToDatabase(databaseURL, sqlStatement string) error {
 	conn, err := pgx.Connect(context.Background(), databaseURL)
 	if err != nil {
-		return errors.New("Failed to connect to database.")
+		return errors.New("failed to connect to database")
 	}
 
-	defer conn.Close(context.Background())
+	defer func(conn *pgx.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(conn, context.Background())
 
 	err = crdbpgx.ExecuteTx(context.Background(), conn, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		return InsertRows(context.Background(), tx, sqlStatement)
@@ -130,7 +135,7 @@ func InsertRows(ctx context.Context, tx pgx.Tx, statement string) error {
 	_, err := tx.Exec(ctx, statement)
 
 	if err != nil {
-		return errors.New("Failed to execute database transaction.")
+		return errors.New("failed to execute database transaction")
 	}
 
 	return nil

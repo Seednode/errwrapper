@@ -60,7 +60,7 @@ func SendLogEmail(subject string, body string, attachments ...string) error {
 	for _, attachment := range attachments {
 		filestat, err := os.Stat(attachment)
 		if err != nil {
-			return fmt.Errorf("File %q to be attached does not exist.", attachment)
+			return fmt.Errorf("file %q to be attached does not exist", attachment)
 		}
 		if filestat.Size() > 0 {
 			m.Attach(attachment)
@@ -71,7 +71,7 @@ func SendLogEmail(subject string, body string, attachments ...string) error {
 
 	err = d.DialAndSend(m)
 	if err != nil {
-		return errors.New("Failed to send email.")
+		return errors.New("failed to send email")
 	}
 
 	return nil

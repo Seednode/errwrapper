@@ -31,7 +31,7 @@ func CreatePIDFile() (*os.File, error) {
 
 	filePtr, err := os.Create(pidFile)
 	if err != nil {
-		return nil, errors.New("Failed to create pid file.")
+		return nil, errors.New("failed to create pid file")
 	}
 
 	return filePtr, nil
@@ -42,7 +42,7 @@ func RemovePIDFile() error {
 	if exists {
 		err := os.Remove(pidfile)
 		if err != nil {
-			return errors.New("Failed to remove pid file.")
+			return errors.New("failed to remove pid file")
 		}
 	}
 

@@ -23,14 +23,14 @@ func CreateLoggingDirectory() (string, error) {
 
 	homeDirectory, err := os.UserHomeDir()
 	if err != nil {
-		return "", errors.New("Home directory not found.")
+		return "", errors.New("home directory not found")
 	}
 
 	loggingDirectory := homeDirectory + "/logs/" + currentDate
 
 	err = os.MkdirAll(loggingDirectory, 0755)
 	if err != nil {
-		return "", errors.New("Failed to create logging directory.")
+		return "", errors.New("failed to create logging directory")
 	}
 
 	return loggingDirectory, nil
@@ -50,12 +50,12 @@ func LogCommand(pidFile *os.File, arguments []string) (string, string, int, erro
 
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", "", 0, errors.New("Failed to allocate pipe for stdout.")
+		return "", "", 0, errors.New("failed to allocate pipe for stdout")
 	}
 
 	stdErr, err := cmd.StderrPipe()
 	if err != nil {
-		return "", "", 0, errors.New("Failed to allocate pipe for stderr.")
+		return "", "", 0, errors.New("failed to allocate pipe for stderr")
 	}
 
 	err = cmd.Start()
@@ -66,20 +66,33 @@ func LogCommand(pidFile *os.File, arguments []string) (string, string, int, erro
 	pid := strconv.Itoa(cmd.Process.Pid)
 	_, err = pidFile.Write([]byte(pid))
 	if err != nil {
-		return "", "", 0, errors.New("Failed to write pid file.")
+		return "", "", 0, errors.New("failed to write pid file")
 	}
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go Tee(stdOut, &wg, stdOutFile)
+	go func() {
+		err := Tee(stdOut, &wg, stdOutFile)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	wg.Add(1)
-	go Tee(stdErr, &wg, stdErrFile)
+	go func() {
+		err := Tee(stdErr, &wg, stdErrFile)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	wg.Wait()
 
-	cmd.Wait()
+	err = cmd.Wait()
+	if err != nil {
+		return "", "", 0, err
+	}
 
 	exitCode := cmd.ProcessState.ExitCode()
 

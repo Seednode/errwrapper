@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version string = "0.1"
 var Quiet bool
 
 var rootCmd = &cobra.Command{

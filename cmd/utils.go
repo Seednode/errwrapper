@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -39,16 +40,14 @@ func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) error {
 	for _, element := range out {
 		fileDescriptor, err := os.OpenFile(element, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
-			return errors.New("Failed to open file.")
+			return errors.New("failed to open file")
 		}
-		defer func() error {
+		defer func() {
 			err := fileDescriptor.Close()
 			if err != nil {
-				return errors.New("Failed to close file.")
+				fmt.Println(err)
 			}
-
-			return nil
-		}() // close each fd after we finish reading
+		}()
 		fileDescriptors = append(fileDescriptors, fileDescriptor)
 	}
 
@@ -62,7 +61,7 @@ func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) error {
 
 	_, err := io.CopyBuffer(writer, in, buf)
 	if err != nil {
-		return errors.New("Failed to write logs.")
+		return errors.New("failed to write logs")
 	}
 
 	return nil
