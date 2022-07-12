@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -36,7 +35,7 @@ func CreateLoggingDirectory() (string, error) {
 	return loggingDirectory, nil
 }
 
-func LogCommand(pidFile *os.File, arguments []string) (string, string, int, error) {
+func LogCommand(arguments []string) (string, string, int, error) {
 	timeStamp := fmt.Sprint(time.Now().UnixMicro())
 	loggingDirectory, err := CreateLoggingDirectory()
 	if err != nil {
@@ -61,12 +60,6 @@ func LogCommand(pidFile *os.File, arguments []string) (string, string, int, erro
 	err = cmd.Start()
 	if err != nil {
 		fmt.Println(err)
-	}
-
-	pid := strconv.Itoa(cmd.Process.Pid)
-	_, err = pidFile.Write([]byte(pid))
-	if err != nil {
-		return "", "", 0, errors.New("failed to write pid file")
 	}
 
 	var wg sync.WaitGroup

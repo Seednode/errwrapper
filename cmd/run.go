@@ -22,24 +22,6 @@ func RunCommand(arguments []string) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, os.Interrupt)
 
-	pidFile, err := CreatePIDFile()
-	if err != nil {
-		fmt.Println(err)
-		panic(Exit{1})
-	}
-
-	defer func() {
-		err := pidFile.Close()
-		if err != nil {
-			fmt.Println("Failed to close pid file.")
-		}
-
-		err = RemovePIDFile()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
-
 	homeDirectory, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println("Home directory not found.")
@@ -60,7 +42,7 @@ func RunCommand(arguments []string) {
 	}
 
 	startTime := time.Now()
-	stdOutFile, stdErrFile, exitCode, err := LogCommand(pidFile, arguments)
+	stdOutFile, stdErrFile, exitCode, err := LogCommand(arguments)
 	if err != nil {
 		fmt.Println(err)
 	}
