@@ -16,7 +16,7 @@ type Exit struct{ Code int }
 
 func HandleExit() {
 	if e := recover(); e != nil {
-		if exit, ok := e.(Exit); ok == true {
+		if exit, ok := e.(Exit); ok {
 			os.Exit(exit.Code)
 		}
 		panic(e)
