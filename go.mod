@@ -6,7 +6,7 @@ require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.3
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/joho/godotenv v1.5.1
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	gopkg.in/mail.v2 v2.3.1
 )
 
