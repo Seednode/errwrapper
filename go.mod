@@ -3,7 +3,7 @@ module seedno.de/seednode/errwrapper
 go 1.19
 
 require (
-	github.com/cockroachdb/cockroach-go/v2 v2.3.3
+	github.com/cockroachdb/cockroach-go/v2 v2.3.4
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.7.0
