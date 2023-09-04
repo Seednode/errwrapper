@@ -23,10 +23,17 @@ func HandleExit() {
 	}
 }
 
-func GetEnvVar(variable string) (string, error) {
+func GetEnvVar(variable string, redact bool) (string, error) {
 	v := os.Getenv(variable)
 	if v == "" {
-		return "", errors.New("Variable " + variable + " is empty. Exiting.")
+		err := errors.New("variable " + variable + " is empty. exiting")
+		return "", err
+	}
+
+	if redact {
+		fmt.Printf("Set %v to <redacted>\n", variable)
+	} else {
+		fmt.Printf("Set %v to %v\n", variable, v)
 	}
 
 	return v, nil

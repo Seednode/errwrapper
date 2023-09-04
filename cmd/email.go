@@ -16,12 +16,12 @@ import (
 const MAILDATE string = "2006/01/02-15:04:05"
 
 func SendLogEmail(subject string, body string, attachments ...string) error {
-	server, err := GetEnvVar("ERRWRAPPER_MAIL_SERVER")
+	server, err := GetEnvVar("ERRWRAPPER_MAIL_SERVER", false)
 	if err != nil {
 		return err
 	}
 
-	portString, err := GetEnvVar("ERRWRAPPER_MAIL_PORT")
+	portString, err := GetEnvVar("ERRWRAPPER_MAIL_PORT", false)
 	if err != nil {
 		return err
 	}
@@ -31,22 +31,22 @@ func SendLogEmail(subject string, body string, attachments ...string) error {
 		return err
 	}
 
-	from, err := GetEnvVar("ERRWRAPPER_MAIL_FROM")
+	from, err := GetEnvVar("ERRWRAPPER_MAIL_FROM", false)
 	if err != nil {
 		return err
 	}
 
-	to, err := GetEnvVar("ERRWRAPPER_MAIL_TO")
+	to, err := GetEnvVar("ERRWRAPPER_MAIL_TO", false)
 	if err != nil {
 		return err
 	}
 
-	user, err := GetEnvVar("ERRWRAPPER_MAIL_USER")
+	user, err := GetEnvVar("ERRWRAPPER_MAIL_USER", false)
 	if err != nil {
 		return err
 	}
 
-	pass, err := GetEnvVar("ERRWRAPPER_MAIL_PASS")
+	pass, err := GetEnvVar("ERRWRAPPER_MAIL_PASS", true)
 	if err != nil {
 		return err
 	}

@@ -56,7 +56,18 @@ func RunCommand(arguments []string) {
 	go func() {
 		defer wg.Done()
 
-		databaseURL, err := GetDatabaseURL()
+		dbType, err := GetEnvVar("ERRWRAPPER_DB_TYPE", false)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if dbType != "cockroachdb" && dbType != "postgresql" {
+			fmt.Println("invalid database type specified")
+			return
+		}
+
+		databaseURL, err := GetDatabaseURL(dbType)
 		if err != nil {
 			fmt.Println(err)
 			return
