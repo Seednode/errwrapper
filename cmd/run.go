@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -38,7 +39,7 @@ func RunCommand(arguments []string) error {
 		return errors.New("home directory not found")
 	}
 
-	envFile := homeDirectory + "/.config/errwrapper/.env"
+	envFile := filepath.Join(homeDirectory, ".config", "errwrapper", ".env")
 	err = godotenv.Load(envFile)
 	if err != nil {
 		return fmt.Errorf("failed to load env file %q", envFile)
