@@ -25,8 +25,8 @@ CREATE TABLE ${ERRWRAPPER_DB_TABLE} (
 );
 ```
 
-## Configure the container
-The following environment variables are used to configure the service (all values provided are just examples):
+## Configure the tool
+The following environment variables are used to configure errwrapper (all values provided are just examples):
 ```
 ERRWRAPPER_DB_TYPE=postgresql
 ERRWRAPPER_DB_HOST=errwrapper-db
@@ -46,7 +46,7 @@ TZ=America/Chicago
 ```
 
 ## Usage output
-Alternatively, you can configure the service using command-line flags.
+Alternatively, you can configure errwrapper using command-line flags.
 ```
 Runs a command, logging output to a file and a database, emailing if the command fails.
 
