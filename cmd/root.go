@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Version string = "0.3.0"
+	Version string = "0.3.1"
 )
 
 var (
@@ -37,6 +37,7 @@ var (
 	Database         bool
 	Email            bool
 	StdOut           bool
+	Verbose          bool
 )
 
 var rootCmd = &cobra.Command{
@@ -83,5 +84,6 @@ func init() {
 	rootCmd.Flags().BoolVarP(&Database, "database", "d", false, "log command info to database")
 	rootCmd.Flags().BoolVarP(&Email, "email", "e", false, "send email on error")
 	rootCmd.Flags().BoolVarP(&StdOut, "stdout", "s", false, "log output to stdout as well as a file")
+	rootCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "display environment variables on start")
 	rootCmd.Flags().SetInterspersed(false)
 }
