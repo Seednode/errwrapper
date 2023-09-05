@@ -5,6 +5,7 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -16,78 +17,89 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func RunCommand(arguments []string) {
+func RunCommand(arguments []string) error {
 	defer HandleExit()
+
+	timezone, err := GetEnvVar("TZ", TimeZone, false)
+	if err != nil {
+		timezone = "UTC"
+	}
+
+	time.Local, err = time.LoadLocation(timezone)
+	if err != nil {
+		return err
+	}
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, os.Interrupt)
 
 	homeDirectory, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("Home directory not found.")
-		panic(Exit{1})
+		return errors.New("home directory not found")
 	}
 
 	envFile := homeDirectory + "/.config/errwrapper/.env"
 	err = godotenv.Load(envFile)
 	if err != nil {
-		fmt.Printf("Failed to load env file %q.", envFile)
-		panic(Exit{1})
+		return fmt.Errorf("failed to load env file %q", envFile)
 	}
 
 	hostName, err := os.Hostname()
 	if err != nil {
-		fmt.Println("Hostname not found.")
-		panic(Exit{1})
+		return errors.New("unable to retrieve hostname")
 	}
 
 	startTime := time.Now()
 	stdOutFile, stdErrFile, exitCode, err := LogCommand(arguments)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	stopTime := time.Now()
 
 	command := strings.Join(arguments, " ")
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
-	go func() {
-		defer wg.Done()
-
-		dbType, err := GetEnvVar("ERRWRAPPER_DB_TYPE", false)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		if dbType != "cockroachdb" && dbType != "postgresql" {
-			fmt.Println("invalid database type specified")
-			return
-		}
-
-		databaseURL, err := GetDatabaseURL(dbType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		sqlStatement, err := CreateSQLStatement(startTime, stopTime, hostName, command, exitCode)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		err = WriteToDatabase(databaseURL, sqlStatement)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}()
-
-	if exitCode > 0 {
+	if Database {
 		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			dbType, err := GetEnvVar("ERRWRAPPER_DB_TYPE", DatabaseType, false)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if dbType != "cockroachdb" && dbType != "postgresql" {
+				fmt.Println("invalid database type specified")
+				return
+			}
+
+			databaseURL, err := GetDatabaseURL(dbType)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			sqlStatement, err := CreateSQLStatement(startTime, stopTime, hostName, command, exitCode)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			err = WriteToDatabase(databaseURL, sqlStatement)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}()
+	}
+
+	if exitCode > 0 && Email {
+		wg.Add(1)
+
 		go func() {
 			defer wg.Done()
 			subject := "Command failed on " + hostName
@@ -105,4 +117,6 @@ func RunCommand(arguments []string) {
 	}
 
 	wg.Wait()
+
+	return nil
 }

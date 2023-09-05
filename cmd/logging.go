@@ -20,14 +20,20 @@ func CreateLoggingDirectory() (string, error) {
 	now := time.Now()
 	currentDate := now.Format(LOGDATE)
 
-	homeDirectory, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.New("home directory not found")
+	var loggingDirectory string
+
+	if LoggingDirectory == "" {
+		homeDirectory, err := os.UserHomeDir()
+		if err != nil {
+			return "", errors.New("home directory not found")
+		}
+
+		loggingDirectory = filepath.Join(homeDirectory, "errwrapper")
 	}
 
-	loggingDirectory := homeDirectory + "/logs/" + currentDate
+	loggingDirectory = filepath.Join(loggingDirectory, currentDate)
 
-	err = os.MkdirAll(loggingDirectory, 0755)
+	err := os.MkdirAll(loggingDirectory, 0755)
 	if err != nil {
 		return "", errors.New("failed to create logging directory")
 	}
@@ -41,7 +47,8 @@ func LogCommand(arguments []string) (string, string, int, error) {
 	if err != nil {
 		return "", "", 0, err
 	}
-	loggingPrefix := loggingDirectory + "/" + timeStamp + "_" + filepath.Base(arguments[0])
+
+	loggingPrefix := filepath.Join(loggingDirectory, timeStamp+"_"+filepath.Base(arguments[0]))
 	stdOutFile := loggingPrefix + "_out.log"
 	stdErrFile := loggingPrefix + "_err.log"
 

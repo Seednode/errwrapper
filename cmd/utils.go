@@ -23,10 +23,17 @@ func HandleExit() {
 	}
 }
 
-func GetEnvVar(variable string, redact bool) (string, error) {
-	v := os.Getenv(variable)
+func GetEnvVar(variable, flag string, redact bool) (string, error) {
+	var v string
+
+	if flag != "" {
+		v = flag
+	} else {
+		v = os.Getenv(variable)
+	}
+
 	if v == "" {
-		err := errors.New("variable " + variable + " is empty. exiting")
+		err := errors.New(variable + " is empty. exiting")
 		return "", err
 	}
 
@@ -58,7 +65,7 @@ func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) error {
 		fileDescriptors = append(fileDescriptors, fileDescriptor)
 	}
 
-	if !Quiet {
+	if StdOut {
 		fileDescriptors = append(fileDescriptors, os.Stdout)
 	}
 
