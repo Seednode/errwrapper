@@ -1,9 +1,16 @@
-# Creating the table
+## About
+A tool to log the execution of commands to a file, email, a database, or any combination thereof.
+
+Feature requests, code criticism, bug reports, general chit-chat, and unrelated angst accepted at `errwrapper@seedno.de`.
+
+Static binary builds available [here](https://cdn.seedno.de/builds/errwrapper).
+
+## Creating the table
 The command database is designed to be viewed via the accompanying [commands](https://git.seedno.de/seednode/commands) tool, which should connect to the same database.
 
 In this example, I'll be using the wonderful [usql](https://github.com/xubingnan123/usql) client.
 
-## Connect to the database:
+### Connect to the database:
 To connect, run the following, replacing the variables with their corresponding values:
 
 `usql postgres://${ERRWRAPPER_DB_USER}@${ERRWRAPPER_DB_HOST}:${ERRWRAPPER_DB_PORT}/${ERRWRAPPER_DB_NAME}`
@@ -12,7 +19,7 @@ You should then be at a SQL prompt that looks something like the following:
 
 `pg:errwrapper@errwrapper-db/logging=>`
 
-## Create logging table
+### Create logging table
 To create a table with the proper structure, run the following (as always, adjusting variables as needed):
 ```
 CREATE TABLE ${ERRWRAPPER_DB_TABLE} (
