@@ -8,7 +8,7 @@ Static binary builds available [here](https://cdn.seedno.de/builds/errwrapper).
 ## Creating the table
 The command database is designed to be viewed via the accompanying [commands](https://git.seedno.de/seednode/commands) tool, which should connect to the same database.
 
-In this example, I'll be using the wonderful [usql](https://github.com/xubingnan123/usql) client.
+In this example, I'll be using the wonderful [usql](https://github.com/xo/usql) client.
 
 ### Connect to the database:
 To connect, run the following, replacing the variables with their corresponding values:
