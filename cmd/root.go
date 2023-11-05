@@ -95,6 +95,6 @@ func init() {
 		Hidden: true,
 	})
 
-	rootCmd.SetVersionTemplate("roulette v{{.Version}}\n")
+	rootCmd.SetVersionTemplate("errwrapper v{{.Version}}\n")
 	rootCmd.Version = ReleaseVersion
 }
