@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Version string = "0.3.2"
+	ReleaseVersion string = "0.3.2"
 )
 
 var (
@@ -85,5 +85,16 @@ func init() {
 	rootCmd.Flags().BoolVarP(&Email, "email", "e", false, "send email on error")
 	rootCmd.Flags().BoolVarP(&StdOut, "stdout", "s", false, "log output to stdout as well as a file")
 	rootCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "display environment variables on start")
-	rootCmd.Flags().SetInterspersed(false)
+
+	rootCmd.Flags().SetInterspersed(true)
+
+	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+
+	rootCmd.SilenceErrors = true
+	rootCmd.SetHelpCommand(&cobra.Command{
+		Hidden: true,
+	})
+
+	rootCmd.SetVersionTemplate("roulette v{{.Version}}\n")
+	rootCmd.Version = ReleaseVersion
 }
