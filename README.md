@@ -5,6 +5,10 @@ Feature requests, code criticism, bug reports, general chit-chat, and unrelated 
 
 Static binary builds available [here](https://cdn.seedno.de/builds/errwrapper).
 
+x86_64 and ARM Docker images of latest version: `oci.seedno.de/seednode/errwrapper:latest`.
+
+Dockerfile available [here](https://git.seedno.de/seednode/errwrapper/raw/branch/master/docker/Dockerfile).
+
 ## Creating the table
 The command database is designed to be viewed via the accompanying [commands](https://git.seedno.de/seednode/commands) tool, which should connect to the same database.
 
