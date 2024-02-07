@@ -1,6 +1,6 @@
 module seedno.de/seednode/errwrapper
 
-go 1.21
+go 1.22
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.6
