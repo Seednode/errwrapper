@@ -90,3 +90,8 @@ Flags:
       --time-zone string            timezone to use
   -v, --verbose                     display environment variables on start
 ```
+
+## Building the Docker image
+From inside the cloned repository, build the image using the following command:
+
+`REGISTRY=<registry url> LATEST=yes TAG=alpine ./build-docker.sh`
