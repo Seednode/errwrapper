@@ -1,4 +1,4 @@
-# github.com/cockroachdb/cockroach-go/v2 v2.3.6
+# github.com/cockroachdb/cockroach-go/v2 v2.3.7
 ## explicit; go 1.18
 github.com/cockroachdb/cockroach-go/v2/crdb
 github.com/cockroachdb/cockroach-go/v2/crdb/crdbpgxv5
