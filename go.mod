@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.8
-	github.com/jackc/pgx/v5 v5.5.5
+	github.com/jackc/pgx/v5 v5.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.8.0
 	gopkg.in/mail.v2 v2.3.1
