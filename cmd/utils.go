@@ -23,29 +23,6 @@ func HandleExit() {
 	}
 }
 
-func GetEnvVar(variable, flag string, redact bool) (string, error) {
-	var v string
-
-	if flag != "" {
-		v = flag
-	} else {
-		v = os.Getenv(variable)
-	}
-
-	if v == "" {
-		err := errors.New(variable + " is empty. exiting")
-		return "", err
-	}
-
-	if Verbose && redact {
-		fmt.Printf("Set %v to <redacted>\n", variable)
-	} else if Verbose {
-		fmt.Printf("Set %v to %v\n", variable, v)
-	}
-
-	return v, nil
-}
-
 func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) error {
 	defer wg.Done()
 

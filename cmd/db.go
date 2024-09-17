@@ -18,76 +18,30 @@ import (
 
 const DBDATE string = "2006-01-02T15:04:05.000000000-07:00"
 
-func GetDatabaseURL(dbType string) (string, error) {
+func GetDatabaseURL() (string, error) {
 	var url strings.Builder
 
-	host, err := GetEnvVar("ERRWRAPPER_DB_HOST", DatabaseHost, false)
-	if err != nil {
-		return "", err
-	}
-	url.WriteString("host=" + host)
+	url.WriteString("host=" + DatabaseHost)
+	url.WriteString(" port=" + DatabasePort)
+	url.WriteString(" user=" + DatabaseUser)
 
-	port, err := GetEnvVar("ERRWRAPPER_DB_PORT", DatabasePort, false)
-	if err != nil {
-		return "", err
-	}
-	url.WriteString(" port=" + port)
-
-	user, err := GetEnvVar("ERRWRAPPER_DB_USER", DatabaseUser, false)
-	if err != nil {
-		return "", err
-	}
-	url.WriteString(" user=" + user)
-
-	if dbType == "postgresql" {
-		pass, err := GetEnvVar("ERRWRAPPER_DB_PASS", DatabasePass, true)
-		if err != nil {
-			return "", err
-		}
-		url.WriteString(" password=" + pass)
+	if DatabaseType == "postgresql" {
+		url.WriteString(" password=" + DatabasePass)
 	}
 
-	database, err := GetEnvVar("ERRWRAPPER_DB_NAME", DatabaseName, false)
-	if err != nil {
-		return "", err
-	}
-	url.WriteString(" dbname=" + database)
+	url.WriteString(" dbname=" + DatabaseName)
+	url.WriteString(" sslmode=" + DatabaseSslMode)
 
-	sslMode, err := GetEnvVar("ERRWRAPPER_DB_SSL_MODE", DatabaseSslMode, false)
-	if err != nil {
-		return "", err
-	}
-	url.WriteString(" sslmode=" + sslMode)
-
-	if dbType == "cockroachdb" {
-		sslRootCert, err := GetEnvVar("ERRWRAPPER_DB_ROOT_CERT", DatabaseRootCert, false)
-		if err != nil {
-			return "", err
-		}
-		url.WriteString(" sslrootcert=" + sslRootCert)
-
-		sslClientKey, err := GetEnvVar("ERRWRAPPER_DB_SSL_KEY", DatabaseSslKey, false)
-		if err != nil {
-			return "", err
-		}
-		url.WriteString(" sslkey=" + sslClientKey)
-
-		sslClientCert, err := GetEnvVar("ERRWRAPPER_DB_SSL_CERT", DatabaseSslCert, false)
-		if err != nil {
-			return "", err
-		}
-		url.WriteString(" sslcert=" + sslClientCert)
+	if DatabaseType == "cockroachdb" {
+		url.WriteString(" sslrootcert=" + DatabaseRootCert)
+		url.WriteString(" sslkey=" + DatabaseSslKey)
+		url.WriteString(" sslcert=" + DatabaseSslCert)
 	}
 
 	return url.String(), nil
 }
 
 func CreateSQLStatement(startTime, stopTime time.Time, hostName, command string, exitCode int) (string, error) {
-	tableName, err := GetEnvVar("ERRWRAPPER_DB_TABLE", DatabaseTable, false)
-	if err != nil {
-		return "", err
-	}
-
 	fields := "startTime, stopTime, hostName, commandName, exitCode"
 	values := [5]string{
 		startTime.Format(DBDATE),
@@ -104,7 +58,7 @@ func CreateSQLStatement(startTime, stopTime time.Time, hostName, command string,
 
 	dataToInsert := strings.TrimSuffix(data, ", ")
 
-	statement := "INSERT INTO " + tableName + "(" + fields + ") VALUES (" + dataToInsert + ");"
+	statement := "INSERT INTO " + DatabaseTable + "(" + fields + ") VALUES (" + dataToInsert + ");"
 
 	return statement, nil
 }

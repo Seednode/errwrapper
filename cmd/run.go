@@ -9,41 +9,24 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 func RunCommand(arguments []string) error {
 	defer HandleExit()
 
-	timezone, err := GetEnvVar("TZ", TimeZone, false)
-	if err != nil {
-		timezone = "UTC"
-	}
+	var err error
 
-	time.Local, err = time.LoadLocation(timezone)
+	time.Local, err = time.LoadLocation(TimeZone)
 	if err != nil {
 		return err
 	}
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, os.Interrupt)
-
-	homeDirectory, err := os.UserHomeDir()
-	if err != nil {
-		return errors.New("home directory not found")
-	}
-
-	envFile := filepath.Join(homeDirectory, ".config", "errwrapper", ".env")
-	err = godotenv.Load(envFile)
-	if err != nil {
-		return fmt.Errorf("failed to load env file %q", envFile)
-	}
 
 	hostName, err := os.Hostname()
 	if err != nil {
@@ -67,18 +50,12 @@ func RunCommand(arguments []string) error {
 		go func() {
 			defer wg.Done()
 
-			dbType, err := GetEnvVar("ERRWRAPPER_DB_TYPE", DatabaseType, false)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			if dbType != "cockroachdb" && dbType != "postgresql" {
+			if DatabaseType != "cockroachdb" && DatabaseType != "postgresql" {
 				fmt.Println("invalid database type specified")
 				return
 			}
 
-			databaseURL, err := GetDatabaseURL(dbType)
+			databaseURL, err := GetDatabaseURL()
 			if err != nil {
 				fmt.Println(err)
 				return

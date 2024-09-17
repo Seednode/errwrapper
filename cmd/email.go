@@ -16,44 +16,9 @@ import (
 const MAILDATE string = "2006/01/02-15:04:05"
 
 func SendLogEmail(subject string, body string, attachments ...string) error {
-	server, err := GetEnvVar("ERRWRAPPER_MAIL_SERVER", MailServer, false)
-	if err != nil {
-		return err
-	}
-
-	portString, err := GetEnvVar("ERRWRAPPER_MAIL_PORT", MailPort, false)
-	if err != nil {
-		return err
-	}
-
-	port, err := strconv.Atoi(portString)
-	if err != nil {
-		return err
-	}
-
-	from, err := GetEnvVar("ERRWRAPPER_MAIL_FROM", MailFrom, false)
-	if err != nil {
-		return err
-	}
-
-	to, err := GetEnvVar("ERRWRAPPER_MAIL_TO", MailTo, false)
-	if err != nil {
-		return err
-	}
-
-	user, err := GetEnvVar("ERRWRAPPER_MAIL_USER", MailUser, false)
-	if err != nil {
-		return err
-	}
-
-	pass, err := GetEnvVar("ERRWRAPPER_MAIL_PASS", MailPass, true)
-	if err != nil {
-		return err
-	}
-
 	m := gomail.NewMessage()
-	m.SetHeader("From", from)
-	m.SetHeader("To", to)
+	m.SetHeader("From", MailFrom)
+	m.SetHeader("To", MailTo)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", body)
 
@@ -67,7 +32,12 @@ func SendLogEmail(subject string, body string, attachments ...string) error {
 		}
 	}
 
-	d := gomail.NewDialer(server, port, user, pass)
+	port, err := strconv.Atoi(MailPort)
+	if err != nil {
+		return err
+	}
+
+	d := gomail.NewDialer(MailServer, port, MailUser, MailPass)
 
 	err = d.DialAndSend(m)
 	if err != nil {
