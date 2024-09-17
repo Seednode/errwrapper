@@ -20,25 +20,25 @@ func CreateLoggingDirectory() (string, error) {
 	now := time.Now()
 	currentDate := now.Format(LOGDATE)
 
-	var loggingDirectory string
+	var logDirectory string
 
-	if LoggingDirectory == "" {
+	if loggingDirectory == "" {
 		homeDirectory, err := os.UserHomeDir()
 		if err != nil {
 			return "", errors.New("home directory not found")
 		}
 
-		loggingDirectory = filepath.Join(homeDirectory, "errwrapper")
+		logDirectory = filepath.Join(homeDirectory, "errwrapper")
 	}
 
-	loggingDirectory = filepath.Join(loggingDirectory, currentDate)
+	logDirectory = filepath.Join(logDirectory, currentDate)
 
-	err := os.MkdirAll(loggingDirectory, 0755)
+	err := os.MkdirAll(logDirectory, 0755)
 	if err != nil {
 		return "", errors.New("failed to create logging directory")
 	}
 
-	return loggingDirectory, nil
+	return logDirectory, nil
 }
 
 func LogCommand(arguments []string) (string, string, int, error) {

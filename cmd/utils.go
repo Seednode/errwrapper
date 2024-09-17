@@ -42,7 +42,7 @@ func Tee(in io.Reader, wg *sync.WaitGroup, out ...string) error {
 		fileDescriptors = append(fileDescriptors, fileDescriptor)
 	}
 
-	if StdOut {
+	if stdOut {
 		fileDescriptors = append(fileDescriptors, os.Stdout)
 	}
 

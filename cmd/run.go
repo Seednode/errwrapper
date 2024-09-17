@@ -20,7 +20,7 @@ func RunCommand(arguments []string) error {
 
 	var err error
 
-	time.Local, err = time.LoadLocation(TimeZone)
+	time.Local, err = time.LoadLocation(timeZone)
 	if err != nil {
 		return err
 	}
@@ -44,13 +44,13 @@ func RunCommand(arguments []string) error {
 
 	var wg sync.WaitGroup
 
-	if Database {
+	if database {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 
-			if DatabaseType != "cockroachdb" && DatabaseType != "postgresql" {
+			if databaseType != "cockroachdb" && databaseType != "postgresql" {
 				fmt.Println("invalid database type specified")
 				return
 			}
@@ -75,7 +75,7 @@ func RunCommand(arguments []string) error {
 		}()
 	}
 
-	if exitCode > 0 && Email {
+	if exitCode > 0 && email {
 		wg.Add(1)
 
 		go func() {

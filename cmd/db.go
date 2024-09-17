@@ -21,21 +21,21 @@ const DBDATE string = "2006-01-02T15:04:05.000000000-07:00"
 func GetDatabaseURL() (string, error) {
 	var url strings.Builder
 
-	url.WriteString("host=" + DatabaseHost)
-	url.WriteString(" port=" + DatabasePort)
-	url.WriteString(" user=" + DatabaseUser)
+	url.WriteString("host=" + databaseHost)
+	url.WriteString(" port=" + databasePort)
+	url.WriteString(" user=" + databaseUser)
 
-	if DatabaseType == "postgresql" {
-		url.WriteString(" password=" + DatabasePass)
+	if databaseType == "postgresql" {
+		url.WriteString(" password=" + databasePass)
 	}
 
-	url.WriteString(" dbname=" + DatabaseName)
-	url.WriteString(" sslmode=" + DatabaseSslMode)
+	url.WriteString(" dbname=" + databaseName)
+	url.WriteString(" sslmode=" + databaseSslMode)
 
-	if DatabaseType == "cockroachdb" {
-		url.WriteString(" sslrootcert=" + DatabaseRootCert)
-		url.WriteString(" sslkey=" + DatabaseSslKey)
-		url.WriteString(" sslcert=" + DatabaseSslCert)
+	if databaseType == "cockroachdb" {
+		url.WriteString(" sslrootcert=" + databaseRootCert)
+		url.WriteString(" sslkey=" + databaseSslKey)
+		url.WriteString(" sslcert=" + databaseSslCert)
 	}
 
 	return url.String(), nil
@@ -58,7 +58,7 @@ func CreateSQLStatement(startTime, stopTime time.Time, hostName, command string,
 
 	dataToInsert := strings.TrimSuffix(data, ", ")
 
-	statement := "INSERT INTO " + DatabaseTable + "(" + fields + ") VALUES (" + dataToInsert + ");"
+	statement := "INSERT INTO " + databaseTable + "(" + fields + ") VALUES (" + dataToInsert + ");"
 
 	return statement, nil
 }
