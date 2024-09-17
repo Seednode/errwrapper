@@ -36,6 +36,33 @@ CREATE TABLE ${ERRWRAPPER_DB_TABLE} (
 );
 ```
 
+### Config files
+Almost all options configurable via flags can also be configured via YAML files. Errwrapper looks for config files in the following paths:
+- `/etc/errwrapper/config.yaml`
+- `$HOME/.config/errwrapper/config.yaml`
+- `./config.yaml`
+
+All key names are case-insensitive, and a value of `true` can be used for boolean flags.
+
+For example, the file `~/.config/errwrapper/config.yaml` might contain the following lines:
+```
+ERRWRAPPER_DB_TYPE: postgresql
+ERRWRAPPER_DB_HOST: errwrapper-db
+ERRWRAPPER_DB_PORT: 5432
+ERRWRAPPER_DB_USER: errwrapper
+ERRWRAPPER_DB_PASS: changeme
+ERRWRAPPER_DB_NAME: logging
+ERRWRAPPER_DB_TABLE: logging
+ERRWRAPPER_DB_SSL_MODE: disable
+ERRWRAPPER_MAIL_SERVER: smtp.fake.example
+ERRWRAPPER_MAIL_PORT: 465
+ERRWRAPPER_MAIL_FROM: me@fake.example
+ERRWRAPPER_MAIL_TO: you@fake.example
+ERRWRAPPER_MAIL_USER: errwrapper@fake.example
+ERRWRAPPER_MAIL_PASS: changemetoo
+TIMEZONE: America/Chicago
+```
+
 ### Environment variables
 Almost all options configurable via flags can also be configured via environment variables.
 
