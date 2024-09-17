@@ -60,7 +60,6 @@ ERRWRAPPER_MAIL_FROM: me@fake.example
 ERRWRAPPER_MAIL_TO: you@fake.example
 ERRWRAPPER_MAIL_USER: errwrapper@fake.example
 ERRWRAPPER_MAIL_PASS: changemetoo
-ERRWRAPPER_TIMEZONE: America/Chicago
 ```
 
 ### Environment variables
@@ -87,7 +86,7 @@ ERRWRAPPER_MAIL_FROM=me@fake.example
 ERRWRAPPER_MAIL_TO=you@fake.example
 ERRWRAPPER_MAIL_USER=errwrapper@fake.example
 ERRWRAPPER_MAIL_PASS=changemetoo
-ERRWRAPPER_TIMEZONE=America/Chicago
+TZ=America/Chicago
 ```
 
 ## Usage output

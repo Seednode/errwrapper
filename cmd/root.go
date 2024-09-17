@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "0.4.1"
+	ReleaseVersion string = "0.5.0"
 )
 
 var (
@@ -36,7 +36,6 @@ var (
 	mailTo           string
 	mailUser         string
 	mailPass         string
-	timeZone         string
 	database         bool
 	email            bool
 	stdOut           bool
@@ -79,7 +78,6 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().StringVar(&mailTo, "mail-to", "", "recipient for error notifications")
 	rootCmd.Flags().StringVar(&mailUser, "mail-user", "", "username for smtp account")
 	rootCmd.Flags().StringVar(&mailPass, "mail-pass", "", "password for smtp account")
-	rootCmd.Flags().StringVar(&timeZone, "timezone", "", "timezone to use")
 	rootCmd.Flags().BoolVarP(&database, "database", "d", false, "log command info to database")
 	rootCmd.Flags().BoolVarP(&email, "email", "e", false, "send email on error")
 	rootCmd.Flags().BoolVarP(&stdOut, "stdout", "s", false, "log output to stdout as well as a file")

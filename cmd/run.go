@@ -20,9 +20,12 @@ func RunCommand(arguments []string) error {
 
 	var err error
 
-	time.Local, err = time.LoadLocation(timeZone)
-	if err != nil {
-		return err
+	timeZone := os.Getenv("TZ")
+	if timeZone != "" {
+		time.Local, err = time.LoadLocation(timeZone)
+		if err != nil {
+			return err
+		}
 	}
 
 	sig := make(chan os.Signal, 1)
