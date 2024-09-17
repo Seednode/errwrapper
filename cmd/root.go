@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "0.5.0"
+	ReleaseVersion string = "0.5.1"
 )
 
 var (
@@ -47,16 +47,11 @@ func NewRootCommand() *cobra.Command {
 		Use:   "errwrapper <command>",
 		Short: "Runs a command, logging output to a file and a database, emailing if the command fails.",
 		Args:  cobra.MinimumNArgs(1),
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return initializeConfig(cmd)
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			initializeConfig(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := RunCommand(args)
-			if err != nil {
-				return err
-			}
-
-			return nil
+			return RunCommand(args)
 		},
 	}
 
@@ -100,20 +95,6 @@ func NewRootCommand() *cobra.Command {
 
 func initializeConfig(cmd *cobra.Command) error {
 	v := viper.New()
-
-	v.SetConfigName("config")
-
-	v.SetConfigType("yaml")
-
-	v.AddConfigPath("/etc/errwrapper/")
-	v.AddConfigPath("$HOME/.config/errwrapper")
-	v.AddConfigPath(".")
-
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return err
-		}
-	}
 
 	v.SetEnvPrefix("errwrapper")
 
