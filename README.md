@@ -120,7 +120,6 @@ Flags:
       --mail-to string             recipient for error notifications
       --mail-user string           username for smtp account
   -s, --stdout                     log output to stdout as well as a file
-      --timezone string            timezone to use
   -v, --verbose                    display environment variables on start
       --version                    version for errwrapper
 ```
