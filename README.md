@@ -9,6 +9,11 @@ x86_64 and ARM Docker images of latest version: `oci.seedno.de/seednode/errwrapp
 
 Dockerfile available [here](https://github.com/Seednode/errwrapper/blob/master/docker/Dockerfile).
 
+### Configuration
+The following configuration methods are accepted, in order of highest to lowest priority:
+- Command-line flags
+- Environment variables
+
 ## Creating the table
 The command database is designed to be viewed via the accompanying [commands](https://github.com/Seednode/commands) tool, which should connect to the same database.
 
