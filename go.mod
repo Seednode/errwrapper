@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.8
-	github.com/jackc/pgx/v5 v5.7.1
+	github.com/jackc/pgx/v5 v5.7.2
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
