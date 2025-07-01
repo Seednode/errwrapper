@@ -3,7 +3,7 @@ module github.com/Seednode/errwrapper
 go 1.24
 
 require (
-	github.com/cockroachdb/cockroach-go/v2 v2.4.0
+	github.com/cockroachdb/cockroach-go/v2 v2.4.1
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
