@@ -3,7 +3,7 @@ module github.com/Seednode/errwrapper
 go 1.25
 
 require (
-	github.com/cockroachdb/cockroach-go/v2 v2.4.1
+	github.com/cockroachdb/cockroach-go/v2 v2.4.2
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
@@ -25,7 +25,7 @@ require (
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
