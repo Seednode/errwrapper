@@ -20,6 +20,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 )
 
 // Execute runs fn and retries it as needed. It is used to add retry handling to
@@ -48,20 +49,20 @@ import (
 // following snippet, the original retryable error will be masked by the call to
 // fmt.Errorf, and the transaction will not be automatically retried.
 //
-//    crdb.Execute(func () error {
-//        rows, err := db.QueryContext(ctx, "SELECT ...")
-//        if err != nil {
-//            return fmt.Errorf("scanning row: %s", err)
-//        }
-//        defer rows.Close()
-//        for rows.Next() {
-//            // ...
-//        }
-//        if err := rows.Err(); err != nil {
-//            return fmt.Errorf("scanning row: %s", err)
-//        }
-//        return nil
-//    })
+//	crdb.Execute(func () error {
+//	    rows, err := db.QueryContext(ctx, "SELECT ...")
+//	    if err != nil {
+//	        return fmt.Errorf("scanning row: %s", err)
+//	    }
+//	    defer rows.Close()
+//	    for rows.Next() {
+//	        // ...
+//	    }
+//	    if err := rows.Err(); err != nil {
+//	        return fmt.Errorf("scanning row: %s", err)
+//	    }
+//	    return nil
+//	})
 //
 // Instead, add context by returning an error that implements either:
 // - a `Cause() error` method, in the manner of github.com/pkg/errors, or
@@ -74,23 +75,22 @@ import (
 // 1.13's special `%w` formatter with fmt.Errorf(), for example
 // fmt.Errorf("scanning row: %w", err).
 //
-//    import "github.com/pkg/errors"
+//	import "github.com/pkg/errors"
 //
-//    crdb.Execute(func () error {
-//        rows, err := db.QueryContext(ctx, "SELECT ...")
-//        if err != nil {
-//            return errors.Wrap(err, "scanning row")
-//        }
-//        defer rows.Close()
-//        for rows.Next() {
-//            // ...
-//        }
-//        if err := rows.Err(); err != nil {
-//            return errors.Wrap(err, "scanning row")
-//        }
-//        return nil
-//    })
-//
+//	crdb.Execute(func () error {
+//	    rows, err := db.QueryContext(ctx, "SELECT ...")
+//	    if err != nil {
+//	        return errors.Wrap(err, "scanning row")
+//	    }
+//	    defer rows.Close()
+//	    for rows.Next() {
+//	        // ...
+//	    }
+//	    if err := rows.Err(); err != nil {
+//	        return errors.Wrap(err, "scanning row")
+//	    }
+//	    return nil
+//	})
 func Execute(fn func() error) (err error) {
 	for {
 		err = fn()
@@ -105,7 +105,7 @@ func Execute(fn func() error) (err error) {
 // operations with configurable parameters.
 type ExecuteCtxFunc func(context.Context, ...interface{}) error
 
-// ExecuteCtx runs fn and retries it as needed, respecting a maximum retry count
+// ExecuteCtx runs fn and retries it as needed, respecting a retry policy
 // obtained from the context. It is used to add configurable retry handling to
 // the execution of a single statement. If a multi-statement transaction is
 // being run, use ExecuteTx instead.
@@ -115,6 +115,8 @@ type ExecuteCtxFunc func(context.Context, ...interface{}) error
 // exhausted and the last attempt resulted in a retryable error, ExecuteCtx
 // returns a max retries exceeded error wrapping the last retryable error
 // encountered.
+//
+// Arbitrary retry policies can be configured using WithRetryPolicy(ctx, p).
 //
 // The fn parameter accepts variadic arguments which are passed through on each
 // retry attempt, allowing for flexible parameterization of the retried operation.
@@ -143,8 +145,11 @@ type ExecuteCtxFunc func(context.Context, ...interface{}) error
 //	    return nil
 //	}, userID)
 func ExecuteCtx(ctx context.Context, fn ExecuteCtxFunc, args ...interface{}) (err error) {
-	maxRetries := numRetriesFromContext(ctx)
-	for n := 0; n <= maxRetries; n++ {
+	// establish the retry policy
+	retryPolicy := getRetryPolicy(ctx)
+	// set up the retry policy state
+	retryFunc := retryPolicy.NewRetry()
+	for {
 		if err = ctx.Err(); err != nil {
 			return err
 		}
@@ -153,29 +158,93 @@ func ExecuteCtx(ctx context.Context, fn ExecuteCtxFunc, args ...interface{}) (er
 		if err == nil || !errIsRetryable(err) {
 			return err
 		}
+		delay, retryErr := retryFunc(err)
+		if retryErr != nil {
+			return retryErr
+		}
+		if delay > 0 {
+			select {
+			case <-time.After(delay):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
 	}
-
-	return newMaxRetriesExceededError(err, maxRetries)
 }
 
 type txConfigKey struct{}
 
-// WithMaxRetries configures context so that ExecuteTx retries tx specified
-// number of times when encountering retryable errors.
-// Setting retries to 0 will retry indefinitely.
+// WithMaxRetries configures context so that ExecuteTx retries the transaction
+// up to the specified number of times when encountering retryable errors.
+//
+// The retries parameter controls retry behavior:
+//   - Positive value (e.g., 10): Retry up to that many times before failing
+//   - 0 (UnlimitedRetries): Retry indefinitely until success or non-retryable error
+//     (not recommended in production as it can lead to infinite retry loops)
+//
+// This is a convenience function that creates a LimitBackoffRetryPolicy with
+// no delay between retries (immediate retries).
+//
+// Example with limited retries:
+//
+//	ctx := crdb.WithMaxRetries(context.Background(), 10)
+//	err := crdb.ExecuteTx(ctx, db, nil, func(tx *sql.Tx) error {
+//	    // Will retry up to 10 times on retryable errors
+//	    return tx.ExecContext(ctx, "UPDATE ...")
+//	})
+//
+// Example with unlimited retries (use with caution):
+//
+//	ctx := crdb.WithMaxRetries(context.Background(), 0)
+//	// Will retry indefinitely - ensure you have a context timeout!
+//
+// To disable retries entirely, use WithNoRetries(ctx) instead.
 func WithMaxRetries(ctx context.Context, retries int) context.Context {
-	return context.WithValue(ctx, txConfigKey{}, retries)
+	p := &LimitBackoffRetryPolicy{retries, 0}
+	return WithRetryPolicy(ctx, p)
+}
+
+// WithNoRetries configures context so that ExecuteTx will not retry on
+// retryable errors. The transaction will be attempted exactly once.
+//
+// This is useful when you want to handle retries manually or when operating
+// in a context where automatic retries are not desired (e.g., in testing,
+// or when implementing custom retry logic).
+//
+// Example usage:
+//
+//	ctx := crdb.WithNoRetries(context.Background())
+//	err := crdb.ExecuteTx(ctx, db, nil, func(tx *sql.Tx) error {
+//	    // This will execute only once, no automatic retries
+//	    return tx.ExecContext(ctx, "UPDATE ...")
+//	})
+//	if err != nil {
+//	    // Handle error manually, potentially implementing custom retry logic
+//	}
+func WithNoRetries(ctx context.Context) context.Context {
+	p := &LimitBackoffRetryPolicy{NoRetries, 0}
+	return WithRetryPolicy(ctx, p)
+}
+
+// WithRetryPolicy uses an arbitrary retry policy to perform retries.
+func WithRetryPolicy(ctx context.Context, policy RetryPolicy) context.Context {
+	return context.WithValue(ctx, txConfigKey{}, policy)
+}
+
+// getRetryPolicy retrieves the RetryPolicy from the context or the default
+func getRetryPolicy(ctx context.Context) RetryPolicy {
+	retryPolicy := defaultRetryPolicy
+	if v := ctx.Value(txConfigKey{}); v != nil {
+		retryPolicy = v.(RetryPolicy)
+	}
+
+	return retryPolicy
 }
 
 const defaultRetries = 50
 
-func numRetriesFromContext(ctx context.Context) int {
-	if v := ctx.Value(txConfigKey{}); v != nil {
-		if retries, ok := v.(int); ok && retries >= 0 {
-			return retries
-		}
-	}
-	return defaultRetries
+var defaultRetryPolicy RetryPolicy = &LimitBackoffRetryPolicy{
+	RetryLimit: defaultRetries,
 }
 
 // ExecuteTx runs fn inside a transaction and retries it as needed. On
@@ -201,12 +270,12 @@ func numRetriesFromContext(ctx context.Context) int {
 // following snippet, the original retryable error will be masked by the call to
 // fmt.Errorf, and the transaction will not be automatically retried.
 //
-//    crdb.ExecuteTx(ctx, db, txopts, func (tx *sql.Tx) error {
-//        if err := tx.ExecContext(ctx, "UPDATE..."); err != nil {
-//            return fmt.Errorf("updating record: %s", err)
-//        }
-//        return nil
-//    })
+//	crdb.ExecuteTx(ctx, db, txopts, func (tx *sql.Tx) error {
+//	    if err := tx.ExecContext(ctx, "UPDATE..."); err != nil {
+//	        return fmt.Errorf("updating record: %s", err)
+//	    }
+//	    return nil
+//	})
 //
 // Instead, add context by returning an error that implements either:
 // - a `Cause() error` method, in the manner of github.com/pkg/errors, or
@@ -219,15 +288,14 @@ func numRetriesFromContext(ctx context.Context) int {
 // 1.13's special `%w` formatter with fmt.Errorf(), for example
 // fmt.Errorf("scanning row: %w", err).
 //
-//    import "github.com/pkg/errors"
+//	import "github.com/pkg/errors"
 //
-//    crdb.ExecuteTx(ctx, db, txopts, func (tx *sql.Tx) error {
-//        if err := tx.ExecContext(ctx, "UPDATE..."); err != nil {
-//            return errors.Wrap(err, "updating record")
-//        }
-//        return nil
-//    })
-//
+//	crdb.ExecuteTx(ctx, db, txopts, func (tx *sql.Tx) error {
+//	    if err := tx.ExecContext(ctx, "UPDATE..."); err != nil {
+//	        return errors.Wrap(err, "updating record")
+//	    }
+//	    return nil
+//	})
 func ExecuteTx(ctx context.Context, db *sql.DB, opts *sql.TxOptions, fn func(*sql.Tx) error) error {
 	// Start a transaction.
 	tx, err := db.BeginTx(ctx, opts)
@@ -254,7 +322,7 @@ func (tx stdlibTxnAdapter) Commit(context.Context) error {
 	return tx.tx.Commit()
 }
 
-// Commit is part of the tx interface.
+// Rollback is part of the tx interface.
 func (tx stdlibTxnAdapter) Rollback(context.Context) error {
 	return tx.tx.Rollback()
 }

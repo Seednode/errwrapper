@@ -66,13 +66,13 @@ type TxnRestartError struct {
 	msg        string
 }
 
-func newTxnRestartError(err error, retryErr error) *TxnRestartError {
-	const msgPattern = "restarting txn failed. ROLLBACK TO SAVEPOINT " +
+func newTxnRestartError(err error, retryErr error, op string) *TxnRestartError {
+	const msgPattern = "restarting txn failed. %s " +
 		"encountered error: %s. Original error: %s."
 	return &TxnRestartError{
 		txError:    txError{cause: err},
 		retryCause: retryErr,
-		msg:        fmt.Sprintf(msgPattern, err, retryErr),
+		msg:        fmt.Sprintf(msgPattern, op, err, retryErr),
 	}
 }
 

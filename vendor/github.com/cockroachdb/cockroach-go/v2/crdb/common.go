@@ -14,7 +14,10 @@
 
 package crdb
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Tx abstracts the operations needed by ExecuteInTx so that different
 // frameworks (e.g. go's sql package, pgx, gorm) can be used with ExecuteInTx.
@@ -60,8 +63,10 @@ func ExecuteInTx(ctx context.Context, tx Tx, fn func() error) (err error) {
 		return err
 	}
 
-	maxRetries := numRetriesFromContext(ctx)
-	retryCount := 0
+	// establish the retry policy
+	retryPolicy := getRetryPolicy(ctx)
+	// set up the retry policy state
+	retryFunc := retryPolicy.NewRetry()
 	for {
 		releaseFailed := false
 		err = fn()
@@ -82,13 +87,48 @@ func ExecuteInTx(ctx context.Context, tx Tx, fn func() error) (err error) {
 			return err
 		}
 
-		if rollbackErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT cockroach_restart"); rollbackErr != nil {
-			return newTxnRestartError(rollbackErr, err)
+		// We have a retryable error. Check the retry policy.
+		delay, retryErr := retryFunc(err)
+		// Check if the context has been cancelled
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+		if delay > 0 && retryErr == nil {
+			// When backoff is needed, we don't want to hold locks while waiting for a backoff,
+			// so restart the entire transaction:
+			// 	- tx.Exec(ctx, "ROLLBACK") sends SQL to the server:
+			//    it doesn't call tx.Rollback() (which would close the Go sql.Tx object)
+			//  - The underlying connection remains open: the *sql.Tx wrapper maintains the database connection.
+			//    Only the server-side transaction is rolled back.
+			//  - tx.Exec(ctx, "BEGIN") starts a new server-side transaction on the same connection wrapped by the
+			//    same *sql.Tx object
+			//  - The defer handles cleanup - It calls tx.Rollback() (the Go method) only on errors,
+			//    which closes the Go object and returns the connection to the pool
+			if restartErr := tx.Exec(ctx, "ROLLBACK"); restartErr != nil {
+				return newTxnRestartError(restartErr, err, "ROLLBACK")
+			}
+			if restartErr := tx.Exec(ctx, "BEGIN"); restartErr != nil {
+				return newTxnRestartError(restartErr, err, "BEGIN")
+			}
+			if restartErr := tx.Exec(ctx, "SAVEPOINT cockroach_restart"); restartErr != nil {
+				return newTxnRestartError(restartErr, err, "SAVEPOINT cockroach_restart")
+			}
+		} else {
+			if rollbackErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT cockroach_restart"); rollbackErr != nil {
+				return newTxnRestartError(rollbackErr, err, "ROLLBACK TO SAVEPOINT cockroach_restart")
+			}
 		}
 
-		retryCount++
-		if maxRetries > 0 && retryCount > maxRetries {
-			return newMaxRetriesExceededError(err, maxRetries)
+		if retryErr != nil {
+			return retryErr
+		}
+
+		if delay > 0 {
+			select {
+			case <-time.After(delay):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 	}
 }

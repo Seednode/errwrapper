@@ -3,9 +3,9 @@ module github.com/Seednode/errwrapper
 go 1.25
 
 require (
-	github.com/cockroachdb/cockroach-go/v2 v2.4.2
+	github.com/cockroachdb/cockroach-go/v2 v2.4.3
 	github.com/jackc/pgx/v5 v5.7.6
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	gopkg.in/mail.v2 v2.3.1
