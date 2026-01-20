@@ -51,12 +51,12 @@ func CreateSQLStatement(startTime, stopTime time.Time, hostName, command string,
 		strconv.Itoa(exitCode),
 	}
 
-	var data string
-	for value := 0; value < len(values); value++ {
-		data += fmt.Sprintf("'%s', ", values[value])
+	var data strings.Builder
+	for value := range len(values) {
+		data.WriteString(fmt.Sprintf("'%s', ", values[value]))
 	}
 
-	dataToInsert := strings.TrimSuffix(data, ", ")
+	dataToInsert := strings.TrimSuffix(data.String(), ", ")
 
 	statement := "INSERT INTO " + databaseTable + "(" + fields + ") VALUES (" + dataToInsert + ");"
 

@@ -48,10 +48,8 @@ func RunCommand(arguments []string) error {
 	var wg sync.WaitGroup
 
 	if database {
-		wg.Add(1)
 
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			if databaseType != "cockroachdb" && databaseType != "postgresql" {
 				fmt.Println("invalid database type specified")
@@ -75,14 +73,12 @@ func RunCommand(arguments []string) error {
 				fmt.Println(err)
 				return
 			}
-		}()
+		})
 	}
 
 	if exitCode > 0 && email {
-		wg.Add(1)
 
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			subject := "Command failed on " + hostName
 			body := fmt.Sprintf(
 				"%12s%q\n%12s%s\n%12s%s",
@@ -94,7 +90,7 @@ func RunCommand(arguments []string) error {
 			if err != nil {
 				fmt.Println(err)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
