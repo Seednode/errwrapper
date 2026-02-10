@@ -1,6 +1,6 @@
 module github.com/Seednode/errwrapper
 
-go 1.25
+go 1.26
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.4.3
